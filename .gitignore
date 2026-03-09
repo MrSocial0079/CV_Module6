@@ -1,0 +1,10 @@
+# source videos (too large for GitHub)
+videos/
+
+# output flow videos (large — run scripts to regenerate)
+output/optical_flow/*.mp4
+
+# python cache
+__pycache__/
+*.pyc
+.DS_Store
