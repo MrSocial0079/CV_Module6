@@ -1,5 +1,5 @@
 # CSc 8830: Computer Vision — Assignment 6
-## Optical Flow & Motion Tracking
+## Optical Flow, Motion Tracking & Structure from Motion
 **Author:** Yasaswi Kompella
 
 ---
@@ -8,14 +8,16 @@
 ```
 CV module 6/
 ├── README.md
-├── optical_flow.py        # Part 1: dense + sparse optical flow
-├── motion_tracking.py     # Part 2: LK tracking from scratch + bilinear interp
+├── optical_flow.py           # Part 1: dense + sparse optical flow
+├── motion_tracking.py        # Part 2: LK tracking from scratch + bilinear interp
+├── structure_from_motion.py  # Part 3: SfM from 4 views of a flat planar object
 ├── videos/
-│   ├── video1.mp4         # Swimmers (translational + turbulent motion)
-│   └── video2.mp4         # Aerial traffic (multi-directional motion)
+│   ├── video1.mp4            # Swimmers (translational + turbulent motion)
+│   └── video2.mp4            # Aerial traffic (multi-directional motion)
 └── output/
-    ├── optical_flow/      # flow videos and analysis figures
-    └── tracking/          # tracking validation figures and report
+    ├── optical_flow/         # flow videos and analysis figures
+    ├── tracking/             # tracking validation figures and report
+    └── sfm/                  # SfM camera views, reconstruction, math derivation
 ```
 
 ---
@@ -47,6 +49,17 @@ Outputs:
 - `videoN_tracking_validation.png` — 4-panel: seeds, our LK, OpenCV LK, overlay
 - `bilinear_interp_demo.png` — nearest-neighbour vs bilinear + formula diagram
 - `tracking_report.txt` — numerical point-by-point comparison table
+
+**Part 3 — Structure from Motion**
+```bash
+python structure_from_motion.py
+```
+Outputs (in `output/sfm/`):
+- `view1.png` … `view4.png` — 4 synthetic camera views of the flat card
+- `views_montage.png` — all 4 views in one figure
+- `sfm_reconstruction.png` — 3D point cloud, XY boundary estimation, reprojection plot
+- `camera_setup.png` — camera positions (XZ + YZ planes) with intrinsics table
+- `math_derivation.png` — full mathematical derivation (camera model, homography, DLT, triangulation)
 
 ---
 
@@ -107,6 +120,51 @@ When a tracked point lands at a sub-pixel location (x+dx, y+dy):
 I = (1-dx)(1-dy)*I(x,y) + dx(1-dy)*I(x+1,y)
   + (1-dx)*dy*I(x,y+1)  + dx*dy*I(x+1,y+1)
 ```
+
+---
+
+### Part 3: Structure from Motion
+
+**Object:** Flat rectangular card (30 cm × 20 cm), 5×4 grid of 20 feature points, all at Z=0 in world coordinates.
+
+**Camera setup:** 4 pinhole cameras (fx = fy = 800 px, cx=320, cy=240, 640×480), each at a different position looking at the origin:
+
+| Camera | Position (x, y, z) | Description |
+|--------|-------------------|-------------|
+| C1 | (0.00, 0.00, 1.20) | Frontal |
+| C2 | (-0.50, 0.00, 1.00) | Left side |
+| C3 | (0.50, 0.00, 1.00) | Right side |
+| C4 | (0.25, 0.35, 1.05) | Upper-right |
+
+**Pipeline:**
+
+1. **Projection** — project 3D points to all 4 views (add σ=0.5 px Gaussian noise to simulate real measurements)
+
+2. **Homography estimation** — for each view pair (i, reference), estimate H via DLT / RANSAC using `cv2.findHomography`
+```
+For planar scene (Z=0):
+  p_ref = H * p_i
+  H = K [r1  r2  t]   (3x3, encodes plane-to-image mapping)
+```
+
+3. **Homography decomposition** — recover relative camera pose from H:
+```
+[r1  r2  t_scaled] = K^-1 * H
+r3 = r1 x r2
+Enforce orthonormality via SVD: R = U * Vt
+4 candidate solutions — pick the one where points have positive depth (Z_c > 0)
+```
+
+4. **N-view triangulation (DLT)** — for each feature point, stack 2 equations per view:
+```
+x_i * P_i[2] - P_i[0] = 0   (row in A)
+y_i * P_i[2] - P_i[1] = 0
+Solve A X = 0 via SVD: X = last row of V
+```
+
+5. **Boundary estimation** — project reconstructed 3D points to XY plane, compute convex hull.
+
+**Results:** Mean reprojection error ~0.5 px (matches noise floor). Mean 3D reconstruction error < 1 mm.
 
 ---
 
