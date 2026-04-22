@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 list)",
+      "Bash(python3 -m py_compile optical_flow.py)",
+      "Bash(python3 -m py_compile motion_tracking.py)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3 optical_flow.py)",
+      "Bash(python3 motion_tracking.py)",
+      "Bash(ffmpeg -version)",
+      "Bash(for f in video1_dense_flow video2_dense_flow video1_sparse_flow video2_sparse_flow)",
+      "Bash(do)",
+      "Bash(echo \"Re-encoding $f...\")",
+      "Bash(ffmpeg -y -i \"$f.mp4\" -c:v libx264 -preset fast -crf 18 -pix_fmt yuv420p \"$f_h264.mp4\")",
+      "Bash(ls -lh \"/Users/yashkompella/Desktop/CV/CV module 6/output/optical_flow/\"*.mp4 \"/Users/yashkompella/Desktop/CV/CV module 6/output/tracking/\")",
+      "Bash(git init)",
+      "Bash(git add README.md optical_flow.py motion_tracking.py .gitignore output/)",
+      "Bash(git commit:*)",
+      "Bash(git branch -M main)",
+      "Bash(git remote add origin https://github.com/MrSocial0079/CV_Module6.git)",
+      "Bash(git push -u origin main)"
+    ]
+  }
+}

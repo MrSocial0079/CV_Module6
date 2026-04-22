@@ -8,3 +8,6 @@ output/optical_flow/*.mp4
 __pycache__/
 *.pyc
 .DS_Store
+
+photos/
+view_*
